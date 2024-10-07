@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 
 namespace Lexico_2
 {
@@ -13,8 +14,11 @@ namespace Lexico_2
         public StreamReader archivo;
         public StreamWriter log;
         public StreamWriter asm;
-
         public int linea = 1;
+
+        const int F = -1;
+
+        const int E = -2;
 
         public Lexico()
         {
@@ -58,10 +62,150 @@ namespace Lexico_2
             log.Close();
             asm.Close();
         }
+
+        private int automata(char c, int estado)
+        {
+            int nuevoEstado = estado;
+            switch (estado)
+            {
+                case 0:
+                    if (char.IsWhiteSpace(c))
+                    {
+                        nuevoEstado = 0;
+                    }
+                    else if (char.IsLetter(c))
+                    {
+                        nuevoEstado = 1;
+                    }
+                    else if (char.IsDigit(c))
+                    {
+                        nuevoEstado = 2;
+                    }
+                    else
+                    {
+                        nuevoEstado = 8;
+                    }
+                    break;
+                case 1:
+                    setClasificacion(Tipos.Identificador);
+                    if (!char.IsLetterOrDigit(c))
+                    {
+                        nuevoEstado = F;
+                    }
+                    break;
+                case 2:
+                    setClasificacion(Tipos.Numero);
+                    if (char.IsDigit(c))
+                    {
+                        nuevoEstado = 2;
+                    }
+                    else if (c == '.')
+                    {
+                        nuevoEstado = 3;
+                    }
+                    else if (char.ToLower(c) == 'e')
+                    {
+                        nuevoEstado = 5;
+                    }
+                    else
+                    {
+                        nuevoEstado = F;
+                    }
+                    break;
+                case 3:
+                    if (char.IsDigit(c))
+                    {
+                        nuevoEstado = 4;
+                    }
+                    else
+                    {
+                        nuevoEstado = E;
+                    }
+                    break;
+                case 4:
+                    if (char.IsDigit(c))
+                    {
+                        nuevoEstado = 4;
+                    }
+                    else if (char.ToLower(c) == 'e')
+                    {
+                        nuevoEstado = 5;
+                    }
+                    else
+                    {
+                        nuevoEstado = F;
+                    }
+                    break;
+                case 5:
+                    if (char.IsDigit(c))
+                    {
+                        nuevoEstado = 7;
+                    }
+                    else if (c == '+' || c == '-')
+                    {
+                        nuevoEstado = 6;
+                    }
+                    else
+                    {
+                        nuevoEstado = E;
+                    }
+                    break;
+                case 6:
+                    if (char.IsDigit(c))
+                    {
+                        nuevoEstado = 7;
+                    }
+                    else
+                    {
+                        nuevoEstado = E;
+                    }
+                    break;
+                case 7:
+                    if (char.IsDigit(c))
+                    {
+                        nuevoEstado = 7;
+                    }
+                    else
+                    {
+                        nuevoEstado = F;
+                    }
+                    break;
+                case 8:
+                    setClasificacion(Tipos.Caracter);
+                    nuevoEstado = F;
+                    break;
+            }
+            return nuevoEstado;
+        }
         public void nextToken()
         {
-            char c;
+            char transicion;
             string buffer = "";
+            int estado = 0;
+            while (estado >= 0)
+            {
+                transicion = (char)archivo.Peek();
+                estado = automata(transicion, estado);
+                if (estado == E)
+                {
+                    if (getClasificacion() == Tipos.Numero)
+                    {
+                        throw new Error(" léxico, se espera un dígito", log, linea);
+                    }
+                }
+                if (estado >= 0)
+                {
+                    archivo.Read();
+                    if (transicion == '\n')
+                    {
+                        linea++;
+                    }
+                    if (estado > 0)
+                    {
+                        buffer += transicion;
+                    }
+                }
+            }
             if (!finArchivo())
             {
                 setContenido(buffer);
