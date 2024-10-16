@@ -135,7 +135,19 @@ namespace Lexico_2
                     }
                     else if (c == '"')
                     {
-                    nuevoEstado = 27;
+                        nuevoEstado = 27;
+                    }
+                    else if (c == '\'')
+                    {
+                        nuevoEstado = 29;
+                    }
+                    else if (c == '#')
+                    {
+                        nuevoEstado = 32;
+                    }
+                    else if (c == '/')
+                    {
+                        nuevoEstado = 34;
                     }
                     else
                     {
@@ -370,27 +382,108 @@ namespace Lexico_2
                     }
                     break;
                 case 27:
-                setClasificacion(Tipos.Cadena);
-                if (c != '"')
-                {
-                nuevoEstado = 27;
-                }
-                else if (c == '"')
-                {
-                    nuevoEstado = 28;
-                }
-                else
-                {
-                throw new Error("Caracter ilegal", log, linea);
-                }
-                break;
+                    setClasificacion(Tipos.Cadena);
+                    if (c != '"')
+                    {
+                        if (archivo.EndOfStream)
+                        {
+                            throw new Error("No se encontró la comilla de cierre", log, linea);
+                        }
+                        nuevoEstado = 27;
+                    }
+                    else if (c == '"')
+                    {
+                        nuevoEstado = 28;
+                    }
+                    else
+                    {
+                        throw new Error("Caracter ilegal", log, linea);
+                    }
+                    break;
                 case 28:
-                nuevoEstado = F;
-                break;
+                    nuevoEstado = F;
+                    break;
+                case 29:
+                    setClasificacion(Tipos.Caracter);
+                    nuevoEstado = 30;
+                    break;
+                case 30:
+                    if (c == '\'')
+                    {
+                        nuevoEstado = 31;
+                    }
+                    else
+                    {
+                        throw new Error("No se encontró la comilla simple de cierre", log, linea);
+                    }
+                    break;
+                case 31:
+                    nuevoEstado = F;
+                    break;
+                case 32:
+                    setClasificacion(Tipos.Caracter);
+                    if (char.IsDigit(c))
+                    {
+                        nuevoEstado = 32;
+                    }
+                    else
+                    {
+                        nuevoEstado = F;
+                    }
+                    break;
                 case 33:
                     setClasificacion(Tipos.Caracter);
                     nuevoEstado = F;
                     break;
+                case 34:
+                setClasificacion(Tipos.OperadorFactor);
+                if (c == '=')
+                {
+                nuevoEstado = 17;
+                }
+                else if (c == '*')
+                {
+                nuevoEstado = 36;
+                }
+                else if (c == '/')
+                {
+                nuevoEstado = 35;
+                }
+                else
+                {
+                nuevoEstado = F;
+                }
+                break;
+                case 35:
+                if (c != '\n')
+                {
+                    nuevoEstado = 35;
+                }
+                else if (c == '\n')
+                {
+                nuevoEstado = 0;
+                }
+                break;
+                case 36:
+                if (c != '*')
+                {
+                nuevoEstado = 36;
+                }
+                else if (c == '*')
+                {
+                    nuevoEstado = 37;
+                }
+                break;
+                case 37:
+                if (c != '/')
+                {
+                    nuevoEstado = 37;
+                }
+                else if (c == '/')
+                {
+                    nuevoEstado = 0;
+                }
+                break;
 
             }
             return nuevoEstado;

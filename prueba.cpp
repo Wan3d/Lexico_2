@@ -34,5 +34,9 @@ Hola mundo
 <>
 <=
 "Hola mundo!"
-
-"Hola
+"Hola"
+'A'
+'''
+'6'
+#
+#323232

@@ -40,3 +40,13 @@ e34 = Identificador
 <> = OperadorRelacional
 <= = OperadorRelacional
 "Hola mundo!" = Cadena
+"Hola" = Cadena
+'A' = Caracter
+''' = Caracter
+'6' = Caracter
+# = Caracter
+#323232 = Caracter
+
+-----------------------------------
+
+Líneas del archivo: 43
