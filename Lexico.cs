@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -383,21 +384,17 @@ namespace Lexico_2
                     break;
                 case 27:
                     setClasificacion(Tipos.Cadena);
-                    if (c != '"')
-                    {
-                        if (archivo.EndOfStream)
-                        {
-                            throw new Error("No se encontró la comilla de cierre", log, linea);
-                        }
-                        nuevoEstado = 27;
-                    }
-                    else if (c == '"')
+                    if (c == '"')
                     {
                         nuevoEstado = 28;
                     }
+                    else if (archivo.EndOfStream)
+                    {
+                        nuevoEstado = E;
+                    }
                     else
                     {
-                        throw new Error("Caracter ilegal", log, linea);
+                        nuevoEstado = 27;
                     }
                     break;
                 case 28:
@@ -414,7 +411,7 @@ namespace Lexico_2
                     }
                     else
                     {
-                        throw new Error("No se encontró la comilla simple de cierre", log, linea);
+                        nuevoEstado = E;
                     }
                     break;
                 case 31:
@@ -436,55 +433,66 @@ namespace Lexico_2
                     nuevoEstado = F;
                     break;
                 case 34:
-                setClasificacion(Tipos.OperadorFactor);
-                if (c == '=')
-                {
-                nuevoEstado = 17;
-                }
-                else if (c == '*')
-                {
-                nuevoEstado = 36;
-                }
-                else if (c == '/')
-                {
-                nuevoEstado = 35;
-                }
-                else
-                {
-                nuevoEstado = F;
-                }
-                break;
+                    setClasificacion(Tipos.OperadorFactor);
+                    if (c == '=')
+                    {
+                        nuevoEstado = 17;
+                    }
+                    else if (c == '*')
+                    {
+                        nuevoEstado = 36;
+                    }
+                    else if (c == '/')
+                    {
+                        nuevoEstado = 35;
+                    }
+                    else
+                    {
+                        nuevoEstado = F;
+                    }
+                    break;
                 case 35:
-                if (c != '\n')
-                {
-                    nuevoEstado = 35;
-                }
-                else if (c == '\n')
-                {
-                nuevoEstado = 0;
-                }
-                break;
+                    if (c == '\n')
+                    {
+                        nuevoEstado = 0;
+                    }
+                    else
+                    {
+                        nuevoEstado = 35;
+                    }
+                    break;
                 case 36:
-                if (c != '*')
-                {
-                nuevoEstado = 36;
-                }
-                else if (c == '*')
-                {
-                    nuevoEstado = 37;
-                }
-                break;
-                case 37:
-                if (c != '/')
-                {
-                    nuevoEstado = 37;
-                }
-                else if (c == '/')
-                {
-                    nuevoEstado = 0;
-                }
-                break;
-
+                    if (c == '*')
+                    {
+                        nuevoEstado = 37;
+                    }
+                    else if (archivo.EndOfStream)
+                    {
+                        nuevoEstado = E;
+                    }
+                    else
+                    {
+                        nuevoEstado = 36;
+                    }
+                    break;
+                case 37: //AGREGAR EXCEPCIÓN EN 36 Y 37 SI LLEGA A FIN DE ARCHIVO
+                    if (c == '*')
+                    {
+                        nuevoEstado = 37;
+                    }
+                    else if (c == '/')
+                    {
+                        nuevoEstado = 0;
+                    }
+                    else if (archivo.EndOfStream)
+                    {
+                        nuevoEstado = E;
+                    }
+                    else
+                    {
+                        nuevoEstado = 36;
+                    }
+                    break;
             }
             return nuevoEstado;
         }
@@ -497,13 +505,6 @@ namespace Lexico_2
             {
                 transicion = (char)archivo.Peek();
                 estado = automata(transicion, estado);
-                if (estado == E)
-                {
-                    if (getClasificacion() == Tipos.Numero)
-                    {
-                        throw new Error(" léxico, se espera un dígito", log, linea);
-                    }
-                }
                 if (estado >= 0)
                 {
                     archivo.Read();
@@ -515,6 +516,29 @@ namespace Lexico_2
                     {
                         buffer += transicion;
                     }
+                    else
+                    {
+                        buffer = "";
+                    }
+                }
+            }
+            if (estado == E)
+            {
+                if (getClasificacion() == Tipos.Cadena)
+                {
+                    throw new Error("léxico, se esperaba un cierre de cadena", log, linea);
+                }
+                else if (getClasificacion() == Tipos.Caracter)
+                {
+                    throw new Error("léxico, se esperaba un cierre de comilla simple", log, linea);
+                }
+                else if (getClasificacion() == Tipos.Numero)
+                {
+                    throw new Error("léxico, se esperaba un dígitos", log, linea);
+                }
+                else
+                {
+                    throw new Error("léxico, se espera fin de comentario", log, linea);
                 }
             }
             if (!finArchivo())
