@@ -40,4 +40,10 @@ radio = Identificador
 % = OperadorFactor
 %= = IncrementoFactor
 "" = Cadena
-Error: léxico, se esperaba un cierre de cadena en la linea {19}
+' ' = Caracter
+; = FinSentencia
+} = FinBloque
+
+-----------------------------------
+
+Líneas del archivo: 19
